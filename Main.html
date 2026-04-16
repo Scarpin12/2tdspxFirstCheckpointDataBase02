@@ -1,0 +1,25 @@
+<script>
+    async function dispararVarredura() {
+        const btn = document.getElementById('btn-scan');
+        btn.innerText = "VARRENDO...";
+        
+        try {
+            // Chama a rota da sua API REST
+            const response = await fetch('/api/v1/scan', { method: 'POST' });
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert("Sucesso: " + data.message);
+            } else {
+                alert("Erro no SOC: " + data.message);
+            }
+        } catch (error) {
+            console.error("Erro de conexão:", error);
+            alert("Não foi possível conectar à API.");
+        } finally {
+            btn.innerText = "INICIAR VARREDURA ANTI-BOT";
+        }
+    }
+</script>
+
+<button id="btn-scan" onclick="dispararVarredura()">Iniciar Varredura Anti-Bot</button>
