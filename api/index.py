@@ -1,10 +1,14 @@
 from flask import Flask, jsonify, request
 
+import os
+import sys
+sys.path.append(os.path.dirname(__file__))
+
 try:
+    import connection
     from connection import obter_conexao
 except ImportError:
     from .connection import obter_conexao
-
 app = Flask(__name__)
 
 @app.route('/api/v1/scan', methods=['POST'])
