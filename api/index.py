@@ -1,13 +1,21 @@
 from flask import Flask, jsonify, request
-from connection import obter_conexao
+
+try:
+    from connection import obter_conexao
+except ImportError:
+    from .connection import obter_conexao
 
 app = Flask(__name__)
 
 @app.route('/api/v1/scan', methods=['POST'])
 def scan():
     conn = obter_conexao()
+    
     if conn is None:
-        return jsonify({"status": "error", "message": "Banco de dados não acessível na nuvem (apresentar via localhost)."}), 200 
+        return jsonify({
+            "status": "error", 
+            "message": "Banco de dados local inacessível via nuvem. Rode o projeto localmente para testar a integração Oracle."
+        }), 200 
     plsql_block = """
     DECLARE
         CURSOR c_bot_scrub IS
@@ -16,7 +24,6 @@ def scan():
             JOIN USUARIOS u ON i.USUARIO_ID = u.ID
             WHERE i.STATUS = 'PENDING';
         v_row c_bot_scrub%ROWTYPE;
-        v_contagem NUMBER := 0;
     BEGIN
         OPEN c_bot_scrub;
         LOOP
@@ -28,17 +35,12 @@ def scan():
                 UPDATE USUARIOS SET PRIORIDADE = GREATEST(PRIORIDADE - 15, 0) WHERE ID = v_row.usuario_id;
                 INSERT INTO LOG_AUDITORIA (INSCRICAO_ID, MOTIVO, DATA)
                 VALUES (v_row.inscricao_id, 'BOT DETECTADO: REST API SCAN', SYSDATE);
-                v_contagem := v_contagem + 1;
             END IF;
         END LOOP;
         CLOSE c_bot_scrub;
         COMMIT;
     END;
     """
-    
-    conn = obter_conexao()
-    if not conn:
-        return jsonify({"erro": "Falha na conexão com o banco de dados"}), 500
 
     try:
         with conn.cursor() as cursor:
@@ -53,16 +55,14 @@ def scan():
     finally:
         conn.close()
 
-# ENDPOINT: Listar Logs de Auditoria (GET)
 @app.route('/api/v1/logs', methods=['GET'])
 def listar_logs():
     conn = obter_conexao()
     if not conn:
-        return jsonify({"erro": "Falha na conexão"}), 500
+        return jsonify({"status": "error", "message": "Banco offline"}), 200
 
     try:
         with conn.cursor() as cursor:
-            # Busca os logs para mostrar na API
             cursor.execute("SELECT ID, INSCRICAO_ID, MOTIVO, TO_CHAR(DATA, 'DD/MM/YYYY HH24:MI') FROM LOG_AUDITORIA ORDER BY DATA DESC")
             logs = []
             for row in cursor.fetchall():
@@ -73,8 +73,11 @@ def listar_logs():
                     "data": row[3]
                 })
         return jsonify(logs), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
     finally:
         conn.close()
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
