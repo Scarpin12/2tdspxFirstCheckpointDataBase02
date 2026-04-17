@@ -11,10 +11,6 @@ except ImportError:
     from .connection import obter_conexao
 app = Flask(__name__)
 
-@app.route('/')
-def home():
-    return "<h1>SOC Global Cyber Summit - API Online</h1><p>O backend está funcionando. Acesse o sistema pelo HTML.</p>"
-
 @app.route('/api/v1/scan', methods=['POST'])
 def scan():
     conn = obter_conexao()
