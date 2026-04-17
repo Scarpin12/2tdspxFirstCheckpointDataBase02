@@ -4,7 +4,10 @@ from connection import obter_conexao
 app = Flask(__name__)
 
 @app.route('/api/v1/scan', methods=['POST'])
-def executar_scan():
+def scan():
+    conn = obter_conexao()
+    if conn is None:
+        return jsonify({"status": "error", "message": "Banco de dados não acessível na nuvem (apresentar via localhost)."}), 200 
     plsql_block = """
     DECLARE
         CURSOR c_bot_scrub IS

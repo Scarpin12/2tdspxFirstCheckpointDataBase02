@@ -16,7 +16,6 @@ def obter_conexao():
             dsn=dsn
         )
         return conn
-    except oracledb.DatabaseError as e:
-        error_obj, = e.args
-        print(f"Erro ao conectar: {error_obj.message}")
-        return None
+    except Exception as e:
+        print(f"Erro de conexão (esperado na nuvem): {e}")
+        return None 
