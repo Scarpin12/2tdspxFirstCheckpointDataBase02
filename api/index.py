@@ -1,8 +1,8 @@
-from flask import Flask, jsonify, request
-
+from flask import Flask, jsonify, request, send_from_directory
 import os
 import sys
 sys.path.append(os.path.dirname(__file__))
+app = Flask(__name__)
 
 try:
     import connection
@@ -10,6 +10,10 @@ try:
 except ImportError:
     from .connection import obter_conexao
 app = Flask(__name__)
+
+@app.route('/')
+def serve_front():
+    return send_from_directory('../', 'Main.html')
 
 @app.route('/api/v1/scan', methods=['POST'])
 def scan():
